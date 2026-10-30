@@ -80,8 +80,13 @@ For each document:
 
 Cross-document checks (each a pass/warn/fail entry with a one-sentence detail):
 - Name consistency across all documents (minor spelling or initial differences are "warn", different people are "fail").
-- Recency of each time-bound document relative to today's date.
-- Income consistency: salary slip net pay vs bank statement credits, or ITR income vs bank turnover, when both exist.
+- Recency and coverage, using these fixed rules relative to today's date:
+  - Bank statement: "fail" if it ends more than 45 days before today or covers fewer than 6 months; "warn" if it ends 31-45 days before today.
+  - Salary slips: "fail" if the latest is for a month more than 2 months before today's month; "warn" if fewer than 3 consecutive months are provided.
+  - Utility bill as address proof: "fail" if issued more than 3 months before today.
+  - ITR: "fail" if the latest assessment year is more than 1 year before the current one.
+- Income consistency, when both sources exist: salary slip net pay vs bank salary credits, or ITR income vs bank turnover.
+  "fail" if no matching income credits appear at all, or the average credit differs from stated income by more than 25%; "warn" if any single month differs by more than 10%; otherwise "pass".
 - Any sign of editing or tampering (mismatched fonts, totals that do not add up, altered figures).
 
 missing_documents: checklist items not satisfied by any uploaded document.
