@@ -13,6 +13,7 @@
     "@ai-sdk/deepseek": "^3.0.76",
     "@ai-sdk/openai": "^4.0.105",
     "@ai-sdk/openai-compatible": "^3.0.81",
+    "@react-spring/web": "^10.1.2",
     "@vercel/analytics": "^2.0.1",
     "ai": "^7.0.157",
     "next": "16.4.3",
