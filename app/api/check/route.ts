@@ -23,7 +23,8 @@ function rateLimited(ip: string): boolean {
 
 function sniffType(bytes: Uint8Array): UploadedDoc["mediaType"] | null {
   const ascii = (start: number, end: number) => String.fromCharCode(...bytes.slice(start, end));
-  if (ascii(0, 4) === "%PDF") return "application/pdf";
+  // The PDF spec allows the %PDF- header anywhere in the first 1024 bytes; government portals emit leading bytes.
+  if (ascii(0, 1024).includes("%PDF-")) return "application/pdf";
   if (bytes[0] === 0x89 && ascii(1, 4) === "PNG") return "image/png";
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
   if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     const bytes = new Uint8Array(await file.arrayBuffer());
     const mediaType = sniffType(bytes);
     if (!mediaType) return fail(415, `${file.name}: only PDF, JPG, PNG, or WEBP files are accepted.`);
-    docs.push({ name: file.name.slice(0, 100), mediaType, base64: Buffer.from(bytes).toString("base64") });
+    docs.push({ name: file.name.slice(0, 100), mediaType, data: bytes });
   }
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";

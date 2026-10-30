@@ -20,4 +20,7 @@ const registry = createProviderRegistry({
 
 export const MODEL_ID = process.env.LLM_MODEL || "anthropic:claude-opus-5";
 
+// Other providers (DeepSeek, most OpenAI-compatible hosts) accept images only, so PDFs are sent as extracted text.
+export const READS_PDF = ["anthropic", "openai"].includes(MODEL_ID.split(":")[0]);
+
 export const model = () => registry.languageModel(MODEL_ID as Parameters<typeof registry.languageModel>[0]);
