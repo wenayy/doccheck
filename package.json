@@ -9,9 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.92",
+    "@ai-sdk/deepseek": "^3.0.76",
+    "@ai-sdk/openai": "^4.0.105",
+    "@ai-sdk/openai-compatible": "^3.0.81",
+    "@vercel/analytics": "^2.0.1",
+    "ai": "^7.0.157",
     "next": "16.4.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
