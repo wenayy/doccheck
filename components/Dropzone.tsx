@@ -1,20 +1,27 @@
 "use client";
 
 import { animated, to, useSpring, useTransition } from "@react-spring/web";
-import { useState } from "react";
 
 export type Picked = { id: string; file: File; preview: string | null };
 
 export const MAX_FILES = 6;
 export const MAX_TOTAL_BYTES = 4 * 1024 * 1024;
-const ACCEPT = "application/pdf,image/jpeg,image/png,image/webp";
+export const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
 export function toPicked(file: File): Picked {
   return { id: crypto.randomUUID(), file, preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null };
 }
 
-export function Dropzone({ files, onAdd, onRemove }: { files: Picked[]; onAdd: (f: File[]) => void; onRemove: (id: string) => void }) {
-  const [dragging, setDragging] = useState(false);
+// Some drag sources (shelf apps, browsers) populate dataTransfer.items but leave .files empty.
+export function filesFrom(dt: DataTransfer): File[] {
+  const fromItems = Array.from(dt.items ?? [])
+    .filter((i) => i.kind === "file")
+    .map((i) => i.getAsFile())
+    .filter((f): f is File => f !== null);
+  return fromItems.length > 0 ? fromItems : Array.from(dt.files);
+}
+
+export function Dropzone({ files, dragging, onAdd, onRemove }: { files: Picked[]; dragging: boolean; onAdd: (f: File[]) => void; onRemove: (id: string) => void }) {
   const zone = useSpring({ scale: dragging ? 1.02 : 1, glow: dragging ? 1 : 0, config: { tension: 300, friction: 22 } });
   const tiles = useTransition(files, {
     keys: (p) => p.id,
@@ -30,9 +37,6 @@ export function Dropzone({ files, onAdd, onRemove }: { files: Picked[]; onAdd: (
     <div className="space-y-4">
       <animated.label
         htmlFor="files"
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setDragging(false); onAdd(Array.from(e.dataTransfer.files)); }}
         style={{
           transform: zone.scale.to((s) => `scale(${s})`),
           boxShadow: zone.glow.to((g) => `0 0 ${40 * g}px rgba(52,211,153,${0.25 * g})`),
@@ -48,7 +52,7 @@ export function Dropzone({ files, onAdd, onRemove }: { files: Picked[]; onAdd: (
           id="files"
           type="file"
           multiple
-          accept={ACCEPT}
+          accept={ACCEPTED_TYPES.join(",")}
           disabled={full}
           className="sr-only"
           onChange={(e) => { onAdd(Array.from(e.target.files ?? [])); e.target.value = ""; }}

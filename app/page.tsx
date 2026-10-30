@@ -1,9 +1,9 @@
 "use client";
 
 import { animated, Globals, useReducedMotion, useSpring } from "@react-spring/web";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApplicantToggle } from "@/components/ApplicantToggle";
-import { Dropzone, MAX_FILES, MAX_TOTAL_BYTES, toPicked, type Picked } from "@/components/Dropzone";
+import { ACCEPTED_TYPES, Dropzone, filesFrom, MAX_FILES, MAX_TOTAL_BYTES, toPicked, type Picked } from "@/components/Dropzone";
 import { ReportView } from "@/components/ReportView";
 import { Scanner } from "@/components/Scanner";
 import type { ApplicantType, Report } from "@/lib/check";
@@ -24,10 +24,51 @@ export default function Home() {
   const totalBytes = files.reduce((s, p) => s + p.file.size, 0);
   const canSubmit = files.length > 0 && totalBytes <= MAX_TOTAL_BYTES;
 
-  function addFiles(incoming: File[]) {
-    setError("");
-    setFiles((prev) => [...prev, ...incoming.slice(0, MAX_FILES - prev.length).map(toPicked)]);
-  }
+  const addFiles = useCallback((incoming: File[]) => {
+    // Empty type is allowed: some drag sources omit it, and the server checks the bytes anyway.
+    const ok = incoming.filter((f) => f.type === "" || ACCEPTED_TYPES.includes(f.type));
+    const rejected = incoming.filter((f) => !ok.includes(f));
+    setError(rejected.length ? `Skipped ${rejected.map((f) => f.name).join(", ")}: only PDF, JPG, PNG, or WEBP files work.` : "");
+    setFiles((prev) => [...prev, ...ok.slice(0, MAX_FILES - prev.length).map(toPicked)]);
+  }, []);
+
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
+  useEffect(() => {
+    const idle = phase.name === "idle";
+    const onEnter = (e: DragEvent) => {
+      e.preventDefault();
+      dragDepth.current++;
+      if (idle) setDragging(true);
+    };
+    const onOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = idle ? "copy" : "none";
+    };
+    const onLeave = () => {
+      dragDepth.current = Math.max(0, dragDepth.current - 1);
+      if (dragDepth.current === 0) setDragging(false);
+    };
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      dragDepth.current = 0;
+      setDragging(false);
+      if (!idle || !e.dataTransfer) return;
+      const dropped = filesFrom(e.dataTransfer);
+      if (dropped.length > 0) addFiles(dropped);
+      else setError("That app sent a link, not the file itself. Drag the file from Finder, or click the upload box to browse.");
+    };
+    window.addEventListener("dragenter", onEnter);
+    window.addEventListener("dragover", onOver);
+    window.addEventListener("dragleave", onLeave);
+    window.addEventListener("drop", onDrop);
+    return () => {
+      window.removeEventListener("dragenter", onEnter);
+      window.removeEventListener("dragover", onOver);
+      window.removeEventListener("dragleave", onLeave);
+      window.removeEventListener("drop", onDrop);
+    };
+  }, [phase.name, addFiles]);
 
   function removeFile(id: string) {
     setFiles((prev) => {
@@ -112,7 +153,7 @@ export default function Home() {
                 <p className="text-sm font-medium text-muted">I am applying as</p>
                 <ApplicantToggle value={applicantType} onChange={setApplicantType} />
               </div>
-              <Dropzone files={files} onAdd={addFiles} onRemove={removeFile} />
+              <Dropzone files={files} dragging={dragging} onAdd={addFiles} onRemove={removeFile} />
               {error && <p role="alert" className="rounded-xl border border-fail/40 bg-fail/10 px-4 py-3 text-sm text-fail">{error}</p>}
               <div className="flex flex-wrap items-center gap-4">
                 <button
@@ -153,6 +194,15 @@ export default function Home() {
 
         {phase.name === "done" && <ReportView report={phase.report} files={files} onReset={reset} />}
       </FadeIn>
+
+      {dragging && (
+        <div aria-hidden className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm">
+          <div className="rounded-3xl border-2 border-dashed border-accent px-12 py-10 text-center shadow-[0_0_60px_rgba(52,211,153,0.3)]">
+            <p className="text-2xl font-semibold text-accent">Drop to add documents</p>
+            <p className="mt-2 text-sm text-muted">Anywhere on the page works</p>
+          </div>
+        </div>
+      )}
 
       <footer className="mt-20 border-t border-line pt-6 text-xs leading-relaxed text-muted">
         Documents are processed in memory and sent to an AI model for reading. DocCheck does not store them. This is a preparation aid, not a credit decision.
