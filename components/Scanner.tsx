@@ -31,17 +31,17 @@ export function Scanner({ files }: { files: Picked[] }) {
     <section aria-live="polite" aria-busy="true" className="space-y-8">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {files.map((p) => (
-          <div key={p.id} className="relative overflow-hidden rounded-xl border border-accent/30 bg-panel">
+          <div key={p.id} className="relative overflow-hidden rounded-xl border border-primary/30 bg-card">
             <Thumb picked={p} className="h-40" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/60" />
-            <div className="scan-line pointer-events-none absolute inset-x-0 top-0 h-[10%] bg-gradient-to-b from-transparent via-accent/40 to-transparent shadow-[0_0_24px_rgba(52,211,153,0.6)]" />
+            <div className="scan-line pointer-events-none absolute inset-x-0 top-0 h-[10%] bg-gradient-to-b from-transparent via-primary/40 to-transparent shadow-[0_0_24px_rgba(52,211,153,0.6)]" />
           </div>
         ))}
       </div>
       <div className="flex items-center gap-3">
         <span className="relative flex size-3">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60 motion-reduce:animate-none" />
-          <span className="relative inline-flex size-3 rounded-full bg-accent" />
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60 motion-reduce:animate-none" />
+          <span className="relative inline-flex size-3 rounded-full bg-primary" />
         </span>
         <div className="relative h-6 flex-1 overflow-hidden">
           {text((style, i) => (
@@ -51,7 +51,7 @@ export function Scanner({ files }: { files: Picked[] }) {
           ))}
         </div>
       </div>
-      <p className="text-sm text-muted">Usually 15 to 40 seconds. Keep this tab open.</p>
+      <p className="text-sm text-muted-foreground">Usually 15 to 40 seconds. Keep this tab open.</p>
     </section>
   );
 }

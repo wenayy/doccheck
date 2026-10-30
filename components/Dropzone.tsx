@@ -41,13 +41,13 @@ export function Dropzone({ files, dragging, onAdd, onRemove }: { files: Picked[]
           transform: zone.scale.to((s) => `scale(${s})`),
           boxShadow: zone.glow.to((g) => `0 0 ${40 * g}px rgba(52,211,153,${0.25 * g})`),
         }}
-        className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-6 py-10 text-center transition-colors focus-within:border-accent ${dragging ? "border-accent bg-accent/5" : "border-line bg-panel hover:border-white/25"} ${full ? "pointer-events-none opacity-50" : ""}`}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-6 py-10 text-center transition-colors focus-within:border-primary ${dragging ? "border-primary bg-primary/5" : "border-border bg-card hover:border-white/25"} ${full ? "pointer-events-none opacity-50" : ""}`}
       >
-        <svg aria-hidden width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent">
+        <svg aria-hidden width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-primary">
           <path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span className="text-base font-medium">{full ? "Maximum 6 documents" : "Drop documents here, or click to browse"}</span>
-        <span className="text-sm text-muted">PAN, Aadhaar, salary slips, bank statement, ITR, GST certificate · PDF or image · 4 MB total</span>
+        <span className="text-sm text-muted-foreground">PAN, Aadhaar, salary slips, bank statement, ITR, GST certificate · PDF or image · 4 MB total</span>
         <input
           id="files"
           type="file"
@@ -63,16 +63,16 @@ export function Dropzone({ files, dragging, onAdd, onRemove }: { files: Picked[]
         <>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {tiles((style, p) => (
-              <animated.li style={{ opacity: style.opacity, transform: to([style.y, style.scale], (y, s) => `translateY(${y}px) scale(${s})`) }} className="group relative overflow-hidden rounded-xl border border-line bg-panel">
+              <animated.li style={{ opacity: style.opacity, transform: to([style.y, style.scale], (y, s) => `translateY(${y}px) scale(${s})`) }} className="group relative overflow-hidden rounded-xl border border-border bg-card">
                 <Thumb picked={p} />
                 <div className="flex items-center justify-between gap-2 px-3 py-2">
-                  <span className="truncate text-xs text-muted" title={p.file.name}>{p.file.name}</span>
-                  <button type="button" onClick={() => onRemove(p.id)} aria-label={`Remove ${p.file.name}`} className="rounded-md px-1.5 text-muted hover:bg-white/10 hover:text-foreground">✕</button>
+                  <span className="truncate text-xs text-muted-foreground" title={p.file.name}>{p.file.name}</span>
+                  <button type="button" onClick={() => onRemove(p.id)} aria-label={`Remove ${p.file.name}`} className="rounded-md px-1.5 text-muted-foreground hover:bg-white/10 hover:text-foreground">✕</button>
                 </div>
               </animated.li>
             ))}
           </ul>
-          <p className={`text-sm ${total > MAX_TOTAL_BYTES ? "text-fail" : "text-muted"}`}>
+          <p className={`text-sm ${total > MAX_TOTAL_BYTES ? "text-destructive" : "text-muted-foreground"}`}>
             {files.length} of {MAX_FILES} files · {(total / 1024 / 1024).toFixed(1)} MB of 4 MB
             {total > MAX_TOTAL_BYTES && " · over the limit, remove or compress a file"}
           </p>
@@ -87,6 +87,6 @@ export function Thumb({ picked, className = "h-28" }: { picked: Picked; classNam
     // eslint-disable-next-line @next/next/no-img-element -- local blob URL, next/image cannot optimize it
     <img src={picked.preview} alt="" className={`w-full object-cover object-top ${className}`} />
   ) : (
-    <div className={`flex w-full items-center justify-center bg-white/5 font-mono text-sm text-muted ${className}`}>PDF</div>
+    <div className={`flex w-full items-center justify-center bg-white/5 font-mono text-sm text-muted-foreground ${className}`}>PDF</div>
   );
 }

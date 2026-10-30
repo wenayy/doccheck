@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApplicantToggle } from "@/components/ApplicantToggle";
 import { ACCEPTED_TYPES, Dropzone, filesFrom, MAX_FILES, MAX_TOTAL_BYTES, toPicked, type Picked } from "@/components/Dropzone";
 import { ReportView } from "@/components/ReportView";
+import { Button } from "@/components/ui/button";
 import { Scanner } from "@/components/Scanner";
 import type { ApplicantType, Report } from "@/lib/check";
 
@@ -78,31 +79,48 @@ export default function Home() {
     });
   }
 
+  // Checking and results live on a pushed history entry, so the browser Back button returns to the upload form with files kept.
+  const inFlight = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const onPop = () => {
+      inFlight.current?.abort();
+      setPhase({ name: "idle" });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const backToUpload = () => (history.state?.doccheck ? history.back() : setPhase({ name: "idle" }));
+
   function reset() {
     files.forEach((p) => p.preview && URL.revokeObjectURL(p.preview));
     setFiles([]);
     setError("");
-    setPhase({ name: "idle" });
+    backToUpload();
   }
 
   async function check(picked: Picked[], type: ApplicantType) {
     setError("");
     setPhase({ name: "checking" });
+    if (!history.state?.doccheck) history.pushState({ doccheck: true }, "");
     window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     const form = new FormData();
     form.set("applicant_type", type);
     picked.forEach((p) => form.append("files", p.file));
+    const controller = new AbortController();
+    inFlight.current = controller;
     try {
-      const res = await fetch("/api/check", { method: "POST", body: form });
+      const res = await fetch("/api/check", { method: "POST", body: form, signal: controller.signal });
       const body = await res.json().catch(() => ({ error: "Check failed. Try again." }));
       if (res.ok) setPhase({ name: "done", report: body as Report });
       else {
         setError(body.error ?? "Check failed. Try again.");
-        setPhase({ name: "idle" });
+        backToUpload();
       }
     } catch {
+      if (controller.signal.aborted) return;
       setError("Network error. Check your connection and try again.");
-      setPhase({ name: "idle" });
+      backToUpload();
     }
   }
 
@@ -121,10 +139,10 @@ export default function Home() {
     <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-8 sm:pt-12">
       <header className="flex items-center justify-between">
         <button type="button" onClick={reset} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <span aria-hidden className="grid size-8 place-items-center rounded-lg bg-accent/15 text-accent ring-1 ring-accent/40">✓</span>
+          <span aria-hidden className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/40">✓</span>
           DocCheck
         </button>
-        <span className="rounded-full border border-line px-3 py-1 text-xs text-muted">Free · No sign-up</span>
+        <span className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">Free · No sign-up</span>
       </header>
 
       <FadeIn key={phase.name}>
@@ -133,37 +151,37 @@ export default function Home() {
             <div>
               <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
                 Know if your loan documents will pass{" "}
-                <span className="bg-gradient-to-r from-accent to-sky-400 bg-clip-text text-transparent">before the bank does.</span>
+                <span className="bg-gradient-to-r from-primary to-sky-400 bg-clip-text text-transparent">before the bank does.</span>
               </h1>
-              <p className="mt-4 max-w-2xl text-lg text-muted">
+              <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
                 Upload your KYC and income papers. Get missing documents, name mismatches, stale statements, and salary gaps flagged in under a minute.
               </p>
               <ul className="mt-6 flex flex-wrap gap-2 text-sm">
                 {["Files never stored", "ID numbers masked", "~30 second check"].map((t) => (
-                  <li key={t} className="rounded-full border border-line bg-panel px-3 py-1 text-foreground/80">{t}</li>
+                  <li key={t} className="rounded-full border border-border bg-card px-3 py-1 text-foreground/80">{t}</li>
                 ))}
               </ul>
             </div>
 
             <form
               onSubmit={(e) => { e.preventDefault(); check(files, applicantType); }}
-              className="space-y-6 rounded-3xl border border-line bg-panel p-5 backdrop-blur sm:p-8"
+              className="space-y-6 rounded-3xl border border-border bg-card p-5 backdrop-blur sm:p-8"
             >
               <div className="space-y-3">
-                <p className="text-sm font-medium text-muted">I am applying as</p>
+                <p className="text-sm font-medium text-muted-foreground">I am applying as</p>
                 <ApplicantToggle value={applicantType} onChange={setApplicantType} />
               </div>
               <Dropzone files={files} dragging={dragging} onAdd={addFiles} onRemove={removeFile} />
-              {error && <p role="alert" className="rounded-xl border border-fail/40 bg-fail/10 px-4 py-3 text-sm text-fail">{error}</p>}
+              {error && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>}
               <div className="flex flex-wrap items-center gap-4">
                 <button
                   type="submit"
                   disabled={!canSubmit}
-                  className="rounded-full bg-accent px-7 py-3 font-medium text-background shadow-[0_0_30px_rgba(52,211,153,0.35)] transition hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+                  className="rounded-full bg-primary px-7 py-3 font-medium text-primary-foreground shadow-[0_0_30px_rgba(52,211,153,0.35)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
                 >
                   Check documents
                 </button>
-                <button type="button" onClick={trySamples} className="text-sm text-muted underline-offset-4 hover:text-foreground hover:underline">
+                <button type="button" onClick={trySamples} className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
                   No documents handy? Try sample documents →
                 </button>
               </div>
@@ -175,10 +193,10 @@ export default function Home() {
                 ["Cross-check", "Names, dates, and amounts are compared across every document."],
                 ["Fix before applying", "See exactly what is missing or inconsistent."],
               ].map(([title, body], i) => (
-                <li key={title} className="rounded-2xl border border-line p-5">
-                  <span className="font-mono text-xs text-accent">0{i + 1}</span>
+                <li key={title} className="rounded-2xl border border-border p-5">
+                  <span className="font-mono text-xs text-primary">0{i + 1}</span>
                   <p className="mt-2 font-medium">{title}</p>
-                  <p className="mt-1 text-sm text-muted">{body}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{body}</p>
                 </li>
               ))}
             </ol>
@@ -187,24 +205,27 @@ export default function Home() {
 
         {phase.name === "checking" && (
           <div className="space-y-6">
-            <h1 className="text-3xl font-semibold tracking-tight">Checking {files.length} document{files.length > 1 ? "s" : ""}</h1>
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="text-3xl font-semibold tracking-tight">Checking {files.length} document{files.length > 1 ? "s" : ""}</h1>
+              <Button variant="ghost" onClick={backToUpload}>Cancel</Button>
+            </div>
             <Scanner files={files} />
           </div>
         )}
 
-        {phase.name === "done" && <ReportView report={phase.report} files={files} onReset={reset} />}
+        {phase.name === "done" && <ReportView report={phase.report} files={files} onBack={backToUpload} onReset={reset} />}
       </FadeIn>
 
       {dragging && (
         <div aria-hidden className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm">
-          <div className="rounded-3xl border-2 border-dashed border-accent px-12 py-10 text-center shadow-[0_0_60px_rgba(52,211,153,0.3)]">
-            <p className="text-2xl font-semibold text-accent">Drop to add documents</p>
-            <p className="mt-2 text-sm text-muted">Anywhere on the page works</p>
+          <div className="rounded-3xl border-2 border-dashed border-primary px-12 py-10 text-center shadow-[0_0_60px_rgba(52,211,153,0.3)]">
+            <p className="text-2xl font-semibold text-primary">Drop to add documents</p>
+            <p className="mt-2 text-sm text-muted-foreground">Anywhere on the page works</p>
           </div>
         </div>
       )}
 
-      <footer className="mt-20 border-t border-line pt-6 text-xs leading-relaxed text-muted">
+      <footer className="mt-20 border-t border-border pt-6 text-xs leading-relaxed text-muted-foreground">
         Documents are processed in memory and sent to an AI model for reading. DocCheck does not store them. This is a preparation aid, not a credit decision.
       </footer>
     </main>

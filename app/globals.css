@@ -1,38 +1,84 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* Dark-only app: one token set, shadcn naming. */
 :root {
   color-scheme: dark;
   --background: #070a0f;
   --foreground: #e8edf3;
-  --muted: #8b97a8;
-  --panel: rgba(255, 255, 255, 0.035);
-  --line: rgba(255, 255, 255, 0.09);
-  --accent: #34d399;
-  --warn: #fbbf24;
-  --fail: #f87171;
+  --card: #0d1218;
+  --card-foreground: #e8edf3;
+  --popover: #0d1218;
+  --popover-foreground: #e8edf3;
+  --primary: #34d399;
+  --primary-foreground: #04261a;
+  --secondary: #161d26;
+  --secondary-foreground: #e8edf3;
+  --muted: #141a22;
+  --muted-foreground: #8b97a8;
+  --accent: #1a222c;
+  --accent-foreground: #e8edf3;
+  --destructive: #f87171;
+  --warning: #fbbf24;
+  --success: #34d399;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #34d399;
+  --radius: 0.75rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
-  --color-panel: var(--panel);
-  --color-line: var(--line);
+  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
-  --color-warn: var(--warn);
-  --color-fail: var(--fail);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  /* Literal names: @theme inline resolves at build time, before next/font sets its variables. */
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-heading: var(--font-sans);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-body {
-  background:
-    radial-gradient(60rem 40rem at 15% -10%, rgba(52, 211, 153, 0.13), transparent 60%),
-    radial-gradient(50rem 35rem at 110% 10%, rgba(56, 189, 248, 0.10), transparent 60%),
-    var(--background);
-  background-attachment: fixed;
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply text-foreground;
+    background:
+      radial-gradient(60rem 40rem at 15% -10%, rgba(52, 211, 153, 0.13), transparent 60%),
+      radial-gradient(50rem 35rem at 110% 10%, rgba(56, 189, 248, 0.1), transparent 60%),
+      var(--background);
+    background-attachment: fixed;
+  }
 }
 
 @keyframes scan {
